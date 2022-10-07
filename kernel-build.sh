@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2021 a xyzprjkt property
-# Copyright (C) 2021 a Panchajanya1999 <rsk52959@gmail.com>
-# Copyright (C) 2022 a Himemorii <himemori@mail.com>
+# Copyright (C) 2022 a Himemoria
 #
 
 msg() {
@@ -11,208 +9,147 @@ msg() {
 	echo
 }
 
-# Main Dir Info
-KERNEL_ROOTDIR=$(pwd)
-CLANG_ROOTDIR=$(pwd)/clang-llvm
-GCC64_DIR=$(pwd)/GCC64
-GCC32_DIR=$(pwd)/GCC32
-
-if [[ "$*" =~ "dtc" ]];then
-msg "|| Cloning Toolchain ||"
-git clone --depth=1 https://github.com/NusantaraDevs/DragonTC -b daily/10.0 clang-llvm
-mkdir $GCC64_DIR
-mkdir $GCC32_DIR
-wget -q https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.0.0_r27.tar.gz -O "gcc64.tar.gz"
-tar -xf gcc64.tar.gz -C $GCC64_DIR
-wget -q https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/android-12.0.0_r27.tar.gz -O "gcc32.tar.gz"
-tar -xf gcc32.tar.gz -C $GCC32_DIR
-elif [[ "$*" =~ "zyc" ]];then
-msg "|| Cloning Toolchain ||"
-mkdir $CLANG_ROOTDIR
-rm -rf $CLANG_ROOTDIR/*
-wget -q  https://github.com/ZyCromerZ/Clang/releases/download/15.0.0-20220307-release/Clang-15.0.0-20220307.tar.gz -O "Clang-15.0.0-20220307.tar.gz"
-tar -xf Clang-15.0.0-20220307.tar.gz -C $CLANG_ROOTDIR
-mkdir $GCC64_DIR
-mkdir $GCC32_DIR
-wget -q https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.0.0_r27.tar.gz -O "gcc64.tar.gz"
-tar -xf gcc64.tar.gz -C $GCC64_DIR
-wget -q https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/android-12.0.0_r27.tar.gz -O "gcc32.tar.gz"
-tar -xf gcc32.tar.gz -C $GCC32_DIR
-elif [[ "$*" =~ "gcc" ]];then
-msg "|| Cloning Toolchain ||"
-mkdir $GCC64_DIR
-mkdir $GCC32_DIR
-wget -q https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.0.0_r27.tar.gz -O "gcc64.tar.gz"
-tar -xf gcc64.tar.gz -C $GCC64_DIR
-wget -q https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/android-12.0.0_r27.tar.gz -O "gcc32.tar.gz"
-tar -xf gcc32.tar.gz -C $GCC32_DIR
-elif [[ "$*" =~ "aosp" ]];then
-msg "|| Cloning Toolchain ||"
-mkdir $CLANG_ROOTDIR
-rm -rf $CLANG_ROOTDIR/*
-wget -q  https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/clang-r437112b.tar.gz -O "clang-r437112b.tar.gz"
-tar -xf clang-r437112b.tar.gz -C $CLANG_ROOTDIR
-mkdir $GCC64_DIR
-mkdir $GCC32_DIR
-wget -q https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.0.0_r27.tar.gz -O "gcc64.tar.gz"
-tar -xf gcc64.tar.gz -C $GCC64_DIR
-wget -q https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/android-12.0.0_r27.tar.gz -O "gcc32.tar.gz"
-tar -xf gcc32.tar.gz -C $GCC32_DIR
-fi
+# Directory Info
+MAIN_DIR=$(pwd)
+CLANG_DIR=$MAIN_DIR/clang-llvm
+GCCARM_DIR=$MAIN_DIR/gcc32
+GCCARM64_DIR=$MAIN_DIR/gcc64
 
 # Main Declaration
-MODEL=$DEVICE_NAME
-DEVICE_CODENAME=$DEVICE_CODENAME
-DEVICE_DEFCONFIG=$DEVICE_DEFCONFIG
-AK3_BRANCH=$AK3_BRANCH
+MODEL="Redmi Note 9"
+DEVICE_CODENAME=merlin
+DEVICE_DEFCONFIG=merlin_defconfig
+AK3_BRANCH=merlin
 KERNEL_NAME=$(cat "arch/arm64/configs/$DEVICE_DEFCONFIG" | grep "CONFIG_LOCALVERSION=" | sed 's/CONFIG_LOCALVERSION="-*//g' | sed 's/"*//g' )
 export KBUILD_BUILD_USER=Himemori
 export KBUILD_BUILD_HOST=XZI-TEAM
-CLANG_VER="$("$CLANG_ROOTDIR"/bin/clang --version | head -n 1)"
-GCC_VER="$("$GCC64_DIR"/bin/aarch64-zyc-linux-gnu-gcc --version | head -n 1)"
-LLD_VER="$("$CLANG_ROOTDIR"/bin/ld.lld --version | head -n 1)"
 IMAGE=$(pwd)/out/arch/arm64/boot/Image.gz-dtb
-DATE=$(TZ=Asia/Jakarta date +"%Y%m%d-%T")
-DATE2=$(date +"%m%d")
 START=$(date +"%s")
 DTB=$(pwd)/out/arch/arm64/boot/dts/mediatek/mt6768.dtb
 DTBO=$(pwd)/out/arch/arm64/boot/dtbo.img
 DISTRO=$(source /etc/os-release && echo "${NAME}")
 
-if [[ "$*" =~ "dtc" ]];then
-export KBUILD_COMPILER_STRING="$CLANG_VER with $GCC_VER"
-PATH="${PATH}:${CLANG_ROOTDIR}/bin:${GCC64_DIR}/bin:${GCC32_DIR}/bin"
-elif [[ "$*" =~ "zyc" ]];then
-export KBUILD_COMPILER_STRING="$CLANG_VER with $LLD_VER"
-PATH="${PATH}:${CLANG_ROOTDIR}/bin:${GCC64_DIR}/bin:${GCC32_DIR}/bin"
-elif [[ "$*" =~ "gcc" ]];then
-export KBUILD_COMPILER_STRING="$GCC_VER"
-PATH="$GCC64_DIR/bin/:$GCC32_DIR/bin/:/usr/bin:$PATH"
-elif [[ "$*" =~ "aosp" ]];then
-export KBUILD_COMPILER_STRING="$CLANG_VER with $GCC_VER"
-PATH="${PATH}:${CLANG_ROOTDIR}/bin:${GCC64_DIR}/bin:${GCC32_DIR}/bin"
+# Date
+export TZ=Asia/Jakarta
+DATE="$(date +"%A, %d %b %Y")"
+ZDATE="$(date "+%Y%m%d")"
+
+function clone_clang() {
+	msg "+--- Cloning-Clang ---+"
+	wget https://raw.githubusercontent.com/Himemoria/himemoria-clang/main/clang-16.0.0-link.txt -O "link.txt" > /dev/null 2>&1
+	wget "$(cat link.txt)" -O "Himemoria-Clang.tar.gz" > /dev/null 2>&1
+	mkdir clang-llvm && tar -xf Himemoria-Clang.tar.gz -C $CLANG_DIR > /dev/null 2>&1 && rm -rf Himemoria-Clang.tar.gz link.txt
+}
+
+function clone_gcc() {
+	msg "+--- Cloning-GCC --+"
+	git clone --depth=1 https://github.com/Himemoria/gcc-arm -b 13 "$GCCARM_DIR" > /dev/null 2>&1
+        git clone --depth=1 https://github.com/Himemoria/gcc-arm64 -b 13 "$GCCARM64_DIR" > /dev/null 2>&1
+}
+
+# Get specify compiler from command
+if [[ "$1" == "clang" ]]; then
+	clone_clang
+	CLANG_VER="$(clang-llvm/bin/clang --version | head -n 1)"
+	LLD_VER="$(clang-llvm/bin/ld.lld --version | head -n 1)"
+	export KBUILD_COMPILER_STRING="$CLANG_VER with $LLD_VER"
+	export PATH="$CLANG_DIR/bin:$PATH"
+elif [[ "$1" =~ "gcc" ]]; then
+	clone_gcc
+	KBUILD_COMPILER_STRING=$("$GCC64_DIR"/bin/aarch64-elf-gcc --version | head -n 1)
+	PATH="$GCCARM64_DIR/bin/:$GCCARM_DIR/bin/:/usr/bin:$PATH"
 fi
 
-if [[ "$*" =~ "FullLTO" ]];then
-sed -i "s/CONFIG_THINLTO=y/CONFIG_THINLTO=n/" arch/arm64/configs/$DEVICE_DEFCONFIG
-git add arch/arm64/configs/$DEVICE_DEFCONFIG && git commit -sm 'defconfig: Disable THINLTO'
+if [[ "$2" == "full-lto" ]]; then
+	echo "CONFIG_LTO=y" >> arch/arm64/configs/"$DEVICE_DEFCONFIG"
+	echo "CONFIG_THINLTO=n" >> arch/arm64/configs/"$DEVICE_DEFCONFIG"
+	echo "CONFIG_LTO_CLANG=y" >> arch/arm64/configs/"$DEVICE_DEFCONFIG"
 fi
 
 #Check Kernel Version
 KERVER=$(make kernelversion)
-
-# Set a commit head
-COMMIT_HEAD=$(git log --oneline -1)
-HEADCOMMITID="$(git log --pretty=format:'%h' -n1)"
-HEADCOMMITMSG="$(git log --pretty=format:'%s' -n1)"
-CI_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 TERM=xterm
 PROCS=$(nproc --all)
-export CI_BRANCH TERM
 
-## Check for CI
-if [ "$CI" ]
-then
-	if [ "$CIRCLECI" ]
-	then
-		export KBUILD_BUILD_VERSION=$CIRCLE_BUILD_NUM
-		export CI_BRANCH=$CIRCLE_BRANCH
-	fi
-	if [ "$DRONE" ]
-	then
-		export KBUILD_BUILD_VERSION=$DRONE_BUILD_NUMBER
-		export CI_BRANCH=$DRONE_BRANCH
-		export BASEDIR=$DRONE_REPO_NAME # overriding
-		export SERVER_URL="${DRONE_SYSTEM_PROTO}://${DRONE_SYSTEM_HOSTNAME}/${AUTHOR}/${BASEDIR}/${KBUILD_BUILD_VERSION}"
-	else
-		echo "Not presetting Build Version"
-	fi
-fi
+# Telegram Setup
+git clone --depth=1 https://github.com/fabianonline/telegram.sh Telegram
 
-# Telegram
-export BOT_MSG_URL="https://api.telegram.org/bot$TG_TOKEN/sendMessage"
+TELEGRAM="$MAIN_DIR/Telegram/telegram"
+tgm() {
+  "${TELEGRAM}" -H -D \
+      "$(
+          for POST in "${@}"; do
+              echo "${POST}"
+          done
+      )"
+}
 
-tg_post_msg() {
-  curl -s -X POST "$BOT_MSG_URL" -d chat_id="$TG_CHAT_ID" \
-  -d "disable_web_page_preview=true" \
-  -d "parse_mode=html" \
-  -d text="$1"
-
+tgf() {
+    "${TELEGRAM}" -H \
+    -f "$1" \
+    "$2"
 }
 
 # Post Main Information
-tg_post_msg "<b>New Kernel Under Compilation</b>%0ADate : <code>$(TZ=Asia/Jakarta date)</code>%0A<code> --- Detail Info About it --- </code>%0A<b>- Docker OS: </b><code>$DISTRO</code>%0A- Kernel Name : <code>${KERNEL_NAME}</code>%0A- Kernel Version : <code>${KERVER}</code>%0A- Builder Name : <code>${KBUILD_BUILD_USER}</code>%0A- Builder Host : <code>${KBUILD_BUILD_HOST}</code>%0A- Pipeline Host : <code>$DRONE_SYSTEM_HOSTNAME</code>%0A- Host Core Count : <code>$PROCS</code>%0A- Compiler Used : <code>${KBUILD_COMPILER_STRING}</code>%0A- Branch : <code>$CI_BRANCH</code>%0A- Top Commit : <code>$COMMIT_HEAD</code>%0A<a href='$SERVER_URL'>Link</a>"
+tgm "
+<b>+----- Starting-Compilation -----+</b>
+<b>• Date</b> : <code>$DATE</code>
+<b>• Docker OS</b> : <code>$DISTRO</code>
+<b>• Device Name</b> : <code>$MODEL ($DEVICE_CODENAME)</code>
+<b>• Device Defconfig</b> : <code>$DEVICE_DEFCONFIG</code>
+<b>• Kernel Name</b> : <code>${KERNEL_NAME}</code>
+<b>• Kernel Version</b> : <code>${KERVER}</code>
+<b>• Builder Name</b> : <code>${KBUILD_BUILD_USER}</code>
+<b>• Builder Host</b> : <code>${KBUILD_BUILD_HOST}</code>
+<b>• Pipeline Host</b> : <code>Github-Actions</code>
+<b>• Host Core Count</b> : <code>$PROCS</code>
+<b>• Compiler</b> : <code>${KBUILD_COMPILER_STRING}</code>
+<b>+------------------------------------+</b>
+"
 
-if [[ "$*" =~ "dtc" ]];then
-   MAKE+=(
-    LD_LIBRARY_PATH="${CLANG_ROOTDIR}/lib64:${LD_LIBRARY_PATH}" \
-    CC=${CLANG_ROOTDIR}/bin/clang \
-    AR=${CLANG_ROOTDIR}/bin/llvm-ar \
-    NM=${CLANG_ROOTDIR}/bin/llvm-nm \
-    OBJCOPY=${CLANG_ROOTDIR}/bin/llvm-objcopy \
-    OBJDUMP=${CLANG_ROOTDIR}/bin/llvm-objdump \
-    STRIP=${CLANG_ROOTDIR}/bin/llvm-strip \
-    LD=${CLANG_ROOTDIR}/bin/ld.lld \
-    CLANG_TRIPLE=aarch64-linux-gnu- \
-    CROSS_COMPILE=aarch64-zyc-linux-gnu- \
-    CROSS_COMPILE_ARM32=arm-zyc-linux-gnueabi-
+if [[ -d "clang-llvm" ]]; then
+  MAKE+=(
+	CC=clang
+	NM=llvm-nm
+	CXX=clang++
+	AR=llvm-ar
+	LD=ld.lld
+	STRIP=llvm-strip
+	OBJCOPY=llvm-objcopy
+	OBJDUMP=llvm-objdump
+	OBJSIZE=llvm-size
+	READELF=llvm-readelf
+	HOSTAR=llvm-ar
+	HOSTLD=ld.lld
+	HOSTCC=clang
+	HOSTCXX=clang++
+	CROSS_COMPILE=aarch64-linux-gnu-
+	CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+	CLANG_TRIPLE=aarch64-linux-gnu-
+	LLVM=1
+	LLVM_IAS=1
 )
-elif [[ "$*" =~ "zyc" ]];then
+elif [[ -d "gcc64" ]]; then
   MAKE+=(
-    LD_LIBRARY_PATH="${CLANG_ROOTDIR}/lib64:${LD_LIBRARY_PATH}" \
-    CC=${CLANG_ROOTDIR}/bin/clang \
-    NM=${CLANG_ROOTDIR}/bin/llvm-nm \
-    CXX=${CLANG_ROOTDIR}/bin/clang++ \
-    AR=${CLANG_ROOTDIR}/bin/llvm-ar \
-    LD=${CLANG_ROOTDIR}/bin/ld.lld \
-    STRIP=${CLANG_ROOTDIR}/bin/llvm-strip \
-    OBJCOPY=${CLANG_ROOTDIR}/bin/llvm-objcopy \
-    OBJDUMP=${CLANG_ROOTDIR}/bin/llvm-objdump \
-    OBJSIZE=${CLANG_ROOTDIR}/bin/llvm-size \
-    READELF=${CLANG_ROOTDIR}/bin/llvm-readelf \
-    CROSS_COMPILE=aarch64-linux-android- \
-    CROSS_COMPILE_ARM32=arm-linux-androideabi- \
-    CLANG_TRIPLE=aarch64-linux-gnu- \
-    HOSTAR=${CLANG_ROOTDIR}/bin/llvm-ar \
-    HOSTLD=${CLANG_ROOTDIR}/bin/ld.lld \
-    HOSTCC=${CLANG_ROOTDIR}/bin/clang \
-    HOSTCXX=${CLANG_ROOTDIR}/bin/clang++
- )
- elif [[ "$*" =~ "gcc" ]];then
-  MAKE+=(
-    AR=${GCC64_DIR}/bin/aarch64-zyc-linux-gnu-ar \
-    OBJDUMP=${GCC64_DIR}/bin/aarch64-zyc-linux-gnu-objdump \
-    STRIP=${GCC64_DIR}/bin/aarch64-zyc-linux-gnu-strip \
-    CROSS_COMPILE=${GCC64_DIR}/bin/aarch64-zyc-linux-gnu- \
-    CROSS_COMPILE_ARM32=${GCC32_DIR}/bin/arm-zyc-linux-gnueabi-
-)
- elif [[ "$*" =~ "aosp" ]];then
-  MAKE+=(
-    LD_LIBRARY_PATH="${CLANG_ROOTDIR}/lib64:${LD_LIBRARY_PATH}" \
-    CC=${CLANG_ROOTDIR}/bin/clang \
-    NM=${CLANG_ROOTDIR}/bin/llvm-nm \
-    CXX=${CLANG_ROOTDIR}/bin/clang++ \
-    AR=${CLANG_ROOTDIR}/bin/llvm-ar \
-    LD=${CLANG_ROOTDIR}/bin/ld.lld \
-    STRIP=${CLANG_ROOTDIR}/bin/llvm-strip \
-    OBJCOPY=${CLANG_ROOTDIR}/bin/llvm-objcopy \
-    OBJDUMP=${CLANG_ROOTDIR}/bin/llvm-objdump \
-    OBJSIZE=${CLANG_ROOTDIR}/bin/llvm-size \
-    READELF=${CLANG_ROOTDIR}/bin/llvm-readelf \
-    CROSS_COMPILE=aarch64-linux-android- \
-    CROSS_COMPILE_ARM32=arm-linux-androideabi- \
-    CLANG_TRIPLE=aarch64-linux-gnu- \
-    HOSTAR=${CLANG_ROOTDIR}/bin/llvm-ar \
-    HOSTLD=${CLANG_ROOTDIR}/bin/ld.lld \
-    HOSTCC=${CLANG_ROOTDIR}/bin/clang \
-    HOSTCXX=${CLANG_ROOTDIR}/bin/clang++
+	CC=aarch64-elf-gcc
+    	LD=aarch64-elf-ld.lld
+	CROSS_COMPILE=aarch64-elf-
+	CROSS_COMPILE_ARM32=arm-eabi-
+	AR=llvm-ar
+ 	NM=llvm-nm
+ 	OBJDUMP=llvm-objdump
+	OBJCOPY=llvm-objcopy
+	OBJSIZE=llvm-objsize
+	STRIP=llvm-strip
+	HOSTAR=llvm-ar
+	HOSTCC=gcc
+	HOSTCXX=aarch64-elf-g++
 )
 fi
 
 # Compile
 compile(){
-msg "|| Started Compilation ||"
-cd ${KERNEL_ROOTDIR}
+msg "+--- Starting-Compilation ---+"
 make -j$(nproc) O=out ARCH=arm64 ${DEVICE_DEFCONFIG}
 make -j$(nproc) ARCH=arm64 O=out \
          "${MAKE[@]}" 2>&1 | tee error.log
@@ -222,45 +159,50 @@ make -j$(nproc) ARCH=arm64 O=out \
 	exit 1
    fi
 
-  git clone --depth=1 https://github.com/himemorii/AnyKernel3 -b ${AK3_BRANCH} AnyKernel
+  git clone --depth=1 https://github.com/Himemoria/AnyKernel3 -b ${AK3_BRANCH} AnyKernel
     cp $IMAGE AnyKernel
-    if [[ $VARIANT = "MIUI" ]];then
     cp $DTBO AnyKernel
-    fi
     mv $DTB AnyKernel/dtb
 }
 
 # Push kernel to channel
 function push() {
-    msg "|| Started Uploading ||"
+    msg "+--- Starting-Upload ---+"
     cd AnyKernel
-    ZIP_NAME=[$DATE2][$KERVER][$COMPILER][$VARIANT]$KERNEL_NAME[$DEVICE_CODENAME][R-OSS]-$HEADCOMMITID.zip
+    ZIP_NAME=[$KERVER]-$KERNEL_NAME-$DEVICE_CODENAME-R-OSS-$ZDATE.zip
     ZIP=$(echo *.zip)
     MD5CHECK=$(md5sum "${ZIP}" | cut -d' ' -f1)
     SHA1CHECK=$(sha1sum "${ZIP}" | cut -d' ' -f1)
-    tg_post_msg "✅ <b>Build Success</b>%0A- <code>$((DIFF / 60)) minute(s) $((DIFF % 60)) second(s) </code>%0A<b>MD5 Checksum</b>%0A- <code>${MD5CHECK}</code>%0A<b>SHA1 Checksum</b>%0A- <code>${SHA1CHECK}</code>%0A<b>Under Commit Id Message</b>%0A- <code>${COMMIT_HEAD}</code>%0A<b>Compilers</b>%0A- <code>$KBUILD_COMPILER_STRING</code>%0A<b>Zip Name</b>%0A- <code>${ZIP_NAME}</code>%0A%0A-- Happy Using --"
-    curl -F document=@$ZIP "https://api.telegram.org/bot$TG_TOKEN/sendDocument" \
-        -F chat_id="$TG_CHAT_ID" \
-        -F "disable_web_page_preview=true" \
-        -F "parse_mode=html" \
-        -F caption="✅ Compile took $((DIFF / 60)) minute(s) and $((DIFF % 60)) second(s)"
+tgm "
+<b>+-----------------------------+</b>
+✅ <b>Build Success</b>
+- <code>$((DIFF / 60)) minute(s) $((DIFF % 60)) second(s) </code>
+<b>• MD5 Checksum</b>
+- <code>${MD5CHECK}</code>
+<b>• SHA1 Checksum</b>
+- <code>${SHA1CHECK}</code>
+<b>• Zip Name</b>
+- <code>${ZIP_NAME}</code>
+<b>+-----------------------------+</b>
+"
+
+tgf "$ZIP" "$KBUILD_COMPILER_STRING"
+
 }
+
 # Fin Error
 function finerr() {
+    msg "+--- Sending-Error Log ---+"
     LOG=$(echo error.log)
-    curl -F document=@$LOG "https://api.telegram.org/bot$TG_TOKEN/sendDocument" \
-        -F chat_id="$TG_CHAT_ID" \
-        -F "disable_web_page_preview=true" \
-        -F "parse_mode=html" \
-        -F caption="❌ Compilation Failed. | For <b>${DEVICE_CODENAME}</b> | <b>${KBUILD_COMPILER_STRING}</b>"
+    tgf "$LOG" "❌ Build Failed. | For <b>${DEVICE_CODENAME}</b> | <b>${KBUILD_COMPILER_STRING}</b>"
     exit 1
 }
 
 # Zipping
 function zipping() {
-    msg "|| Started Zipping ||"
+    msg "+--- Started Zipping ---+"
     cd AnyKernel || exit 1
-    zip -r9 [$DATE2][$KERVER][$COMPILER][$VARIANT]$KERNEL_NAME[$DEVICE_CODENAME][R-OSS]-$HEADCOMMITID.zip *
+    zip -r9 [$KERVER]-$KERNEL_NAME-$DEVICE_CODENAME-R-OSS-$ZDATE.zip *
     cd ..
 }
 compile
