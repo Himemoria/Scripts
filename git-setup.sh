@@ -32,7 +32,8 @@ git config --global alias.cp "cherry-pick"
 
 ##----------------------------------------------------------##
 # Setup Change-id hooks
+mkdir -p ~/.git-templates/hooks
 git config --global init.templatedir '~/.git-templates'
-wget -q https://raw.githubusercontent.com/Himemoria/Scripts/master/commit-msg -O ~/.git-templates/hooks
+wget -q https://raw.githubusercontent.com/Himemoria/Scripts/master/commit-msg -O ~/.git-templates/hooks/commit-msg
 chmod 755 ~/.git-templates/hooks/commit-msg
 msg "<<--- Git Setup Succesfully --->>"
